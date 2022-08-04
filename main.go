@@ -1,11 +1,16 @@
-package main 
+package main
 
 import (
 	// "fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"go-gin/tutorial-api/service"
 	"go-gin/tutorial-api/controller"
+	"go-gin/tutorial-api/middleware"
+	"go-gin/tutorial-api/service"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -13,9 +18,20 @@ var (
 	videoController controller.VideoController = controller.New(videoService)
 )
 
+func setUpLogOutput(){
+	f, _ := os.Create("gin.log")
+
+	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
+
+}
+
 
 func main() {
-	server := gin.Default()
+	
+	server := gin.New()
+
+	setUpLogOutput()
+	server.Use(gin.Recovery(), middleware.Logger(), gindump.Dump())
  
 	server.GET("/videos", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, videoController.FindAll(),
