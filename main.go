@@ -4,6 +4,7 @@ import (
 	// "fmt"
 	"go-gin/tutorial-api/controller"
 	"go-gin/tutorial-api/middleware"
+	"go-gin/tutorial-api/repository"
 	"go-gin/tutorial-api/service"
 	"io"
 	"net/http"
@@ -14,7 +15,8 @@ import (
 )
 
 var (
-	videoService service.VideoService = service.New()
+	videoRepository repository.VideoRepository = repository.NewVideoRepository()
+	videoService service.VideoService = service.New(videoRepository)
 	videoController controller.VideoController = controller.New(videoService)
 )
 
@@ -27,8 +29,10 @@ func setUpLogOutput(){
 
 
 func main() {
+
+	defer videoRepository.CloseDB()
 	
-	server := gin.New()
+	server := gin.New() 
 
 	setUpLogOutput()
 	// server.Use(gin.Recovery(), middleware.Logger(), gindump.Dump())
@@ -47,6 +51,30 @@ func main() {
 			return
 		}
 		ctx.JSON(http.StatusOK,"Video was Saved")
+	
+	})
+
+	server.PUT("/videos/:id", func(ctx *gin.Context) {
+		err := videoController.Update(ctx)
+		if err != nil{
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error" : err.Error(),
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK,"Video was Updated")
+	
+	})
+
+	server.DELETE("/videos/:id", func(ctx *gin.Context) {
+		err := videoController.Delete(ctx)
+		if err != nil{
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error" : err.Error(),
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK,"Video was Deleted")
 	
 	})
 
