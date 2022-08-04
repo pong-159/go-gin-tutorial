@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	gindump "github.com/tpkeeper/gin-dump"
+	// gindump "github.com/tpkeeper/gin-dump"
 )
 
 var (
@@ -31,16 +31,24 @@ func main() {
 	server := gin.New()
 
 	setUpLogOutput()
-	server.Use(gin.Recovery(), middleware.Logger(), gindump.Dump())
+	// server.Use(gin.Recovery(), middleware.Logger(), gindump.Dump())
+	server.Use(gin.Recovery(), middleware.Logger())
  
 	server.GET("/videos", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, videoController.FindAll(),
 	)})
 
 	server.POST("/videos", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, videoController.Save(ctx),
+		err := videoController.Save(ctx)
+		if err != nil{
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error" : err.Error(),
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK,"Video was Saved")
 	
-	)})
+	})
 
 	err := server.Run(":8000")
 
